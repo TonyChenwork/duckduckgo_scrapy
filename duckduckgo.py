@@ -6,26 +6,36 @@ def run():
         browser = p.chromium.launch(headless=False)
         page = browser.new_page()
 
-        page.goto("https://duckduckgo.com/")
-
-        keyword = input("Serch Keyword: ")
-
-        page.fill('input[name="q"]',keyword)
-        page.press("#searchbox_input","Enter")
-
-        page.wait_for_selector('a[data-testid="result-title-a"]')
-
-        results = page.locator('a[data-testid="result-title-a"]').all()
+        with open("keywords.txt","r",encoding="utf-8") as f:
+            keywords = [line.strip() for line in f if line.strip()]  
 
         with open("data.csv","w",newline="",encoding="UTF-8-sig") as f:
             writer = csv.writer(f)
-            writer.writerow(["keyword","title","link"])
+            writer.writerow(["keyword","rank","title","link"])
 
-            for r in results:
-                title = r.text_content()
-                link = r.get_attribute("href")
 
-                writer.writerow([keyword,title,link])
+            for keyword in keywords:
+ 
+                page.goto("https://duckduckgo.com/")
+
+                page.fill('input[name="q"]',keyword)
+                page.press("#searchbox_input","Enter")
+
+                try:
+                    page.wait_for_selector('a[data-testid="result-title-a"]',timeout=10000)
+                except:
+                    writer.writerow([keyword,"FAILED","No results or timeout",""])
+                    continue
+
+                results = page.locator('a[data-testid="result-title-a"]').all()[:5]
+                rank = 0
+
+                for rank,r in enumerate (results, start=1):
+                    title = r.text_content()
+                    link = r.get_attribute("href")
+                    
+
+                    writer.writerow([keyword,rank,title,link])
             
         browser.close()
 
