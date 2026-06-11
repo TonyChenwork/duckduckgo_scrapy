@@ -16,7 +16,10 @@ This scraper opens DuckDuckGo, reads multiple keywords from a text file, searche
 * Extract result links
 * Export results to CSV format
 * Add ranking number for each result
-* Limit results to the top 5 results for each keyword
+* Configure maximum results per keyword
+* Configure maximum pages per keyword
+* Load more DuckDuckGo results with the `#more-results` button
+* Basic error handling for failed searches
 
 ## Technologies
 
@@ -50,6 +53,15 @@ digital nomad
 | link    | Search result URL                         |
 
 ## Version History
+
+### v1.5
+
+* Refactored scraper into reusable functions
+* Added configurable `max_pages` per keyword
+* Added configurable `max_results` per keyword
+* Added experimental "More Results" loading with the `#more-results` button
+* Added result count checking before and after loading more results
+* Added basic error handling for failed searches and loading failures
 
 ### v1.4
 
@@ -85,4 +97,8 @@ digital nomad
 
 This project is a beginner-friendly Playwright automation project.
 
-The main goal is to practice browser interaction, including filling input fields, pressing keys, waiting for dynamic search results, extracting structured data, handling batch input, and exporting clean results into a CSV file.
+The main goal is to practice browser interaction, including filling input fields, pressing keys, waiting for dynamic search results, extracting structured data, handling batch input, loading more results, adding basic error handling, and exporting clean results into a CSV file.
+
+This project follows a common search scraping workflow:
+
+Keyword list → Search page → Load more results → Structured CSV output
