@@ -1,13 +1,13 @@
 from playwright.sync_api import sync_playwright
 import csv
 
-#读取定义函数（）里的文件并且去掉空行
+#读取 keywords.txt文件，去掉空行，返回关键词列表
 def read_keywords(filename):
     with open(filename,"r",encoding="utf-8") as f:
         keywords = [line.strip() for line in f if line.strip()] 
     return keywords
 
-#前往duckduckgo网页，在输入框输入定义函数（）里的keyword并等待网页结果加载完毕（最多等10秒）
+#前往页面，搜索一个关键词，等待内容加载
 def search_keyword(page,keyword):
     page.goto("https://duckduckgo.com/")
     page.fill('input[name="q"]',keyword)
@@ -15,7 +15,7 @@ def search_keyword(page,keyword):
 
     page.wait_for_selector('a[data-testid="result-title-a"]',timeout=10000)
 
-# 抓取当前搜索结果页的标题链接元素，按排名提取 title 和 link，并返回 rows 列表
+#从当前搜索结果页提取 title 和 link，按 rank 组成rows 列表并返回。
 def scrape_results(page,keyword,max_results=10):
     results = page.locator('a[data-testid="result-title-a"]').all()[:max_results]
     
@@ -29,21 +29,25 @@ def scrape_results(page,keyword,max_results=10):
     
     return rows
 
-# 循环点击“更多结果”按钮，并等待搜索结果数量增加
+#按下times次“更多结果”按钮，并等待数据加载完毕，输出新的数据数量结果。
 def load_more_results(page, times):
     for i in range(times):
         try:
             more_button = page.locator("#more-results")
-
+            
+            #判断是否还有“更多结果”按钮
             if more_button.count() == 0:
                 print("No More Results button found.")
                 break
 
+            #存入点击“更多结果”按钮前的数据数量
             old_count = page.locator('a[data-testid="result-title-a"]').count()
             print(f"Clicking more results... current results: {old_count}")
-
+            
+            #点击按钮
             more_button.click()
 
+            #等待JS返回所有标题数量大于按按钮前的标题熟练是True的时候
             page.wait_for_function(
                 """oldCount => {
                     return document.querySelectorAll('a[data-testid="result-title-a"]').length > oldCount
@@ -51,15 +55,17 @@ def load_more_results(page, times):
                 arg=old_count,
                 timeout=10000
             )
-
+            
+            #存入按完按钮后的标题数量
             new_count = page.locator('a[data-testid="result-title-a"]').count()
             print(f"Loaded more results: {old_count} -> {new_count}")
-
+        
+        #报错输出报错内容
         except Exception as e:
             print(f"Failed to load more results: {e}")
             break
 
-#用read_keywrods定义keywords,打开playwright，创建csv，用search_keywords和scrape_results循环keywords，先加载后用rows存入爬取的title和link数据，把数据循环写入csv，最后用try:except提取报错信息
+#主流程：读取数据存入列表 -> 输入最大页数和最多结果 -> 判断输入值是否“合法” -> 打开playwright，创建CSV -> 使用scrape_results()函数搜索，如果page > 1则使用load_more_results函数加载更多，写入csv文件。-> 如果某个关键词失败，记录报错继续下一个关键词。
 def run():
     keywords = read_keywords("keywords.txt")
 

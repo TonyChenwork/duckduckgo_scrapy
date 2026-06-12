@@ -54,6 +54,14 @@ digital nomad
 
 ## Version History
 
+### v1.6
+
+* Added code structure comments for all main functions
+* Added a mind map to explain the full scraper workflow
+* Reviewed the relationship between `max_pages` and `max_results`
+* Tested multiple configurations for first-page and load-more scraping
+* Confirmed CSV output structure with non-empty keyword, rank, title, and link fields
+
 ### v1.5
 
 * Refactored scraper into reusable functions
@@ -102,3 +110,57 @@ The main goal is to practice browser interaction, including filling input fields
 This project follows a common search scraping workflow:
 
 Keyword list → Search page → Load more results → Structured CSV output
+
+
+## Validation Notes
+
+For this beginner scraper, validation focuses on:
+
+* CSV is generated successfully
+* Each row has a keyword, rank, title, and link
+* Empty lines in `keywords.txt` are skipped
+* `max_results` works as an upper limit per keyword
+* `max_pages` controls how many result batches are loaded
+* Failed searches are recorded instead of stopping the whole program
+
+Manual checking of every search result URL is not required for this stage.
+
+# Mind map
+
+run()
+|
+read_keywords("keywords.txt")
+|         |-return keywords
+|
+|-input max_pages, max_results
+|
+|-validate max_pages, max_results
+|
+|-open Playwright browser
+|-create CSV writer
+|
+|-for keyword in keywords:
+    |
+    |-try:
+        |-search_keyword(page,keyword)
+        |   |-open website and search keyword
+        |   |-wait for results
+        |
+        |-if max_pages > 1:
+        |   |-load_more_results(page,max_pages - 1)
+        |           |-click '#more-results'
+        |           |-wait until result count increases
+        |
+        |-rows = scrape_results(page,keyword,max_results)
+        |   |-extract title and link
+        |   |-return rows
+        |
+        |-for row in rows:
+        |   |-writer.writerow(row)
+    |
+    |-except:
+        |-write error in CSV
+        |-print the error
+|
+browser.close()
+           
